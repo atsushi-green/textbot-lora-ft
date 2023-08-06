@@ -1,0 +1,76 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "simple": {
+            "format": "[%(asctime)s][%(levelname)s\t](%(module)s.py: line %(lineno)s) in %(funcName)s() %(message)s"
+        }
+    },
+    "handlers": {
+        "consoleHandler": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout"
+        },
+        "fileHandler": {
+            "class": "logging.FileHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "filename": "a.log"
+        }
+    },
+    "loggers": {
+        "__main__": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        },
+        "make_dataset": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        },
+        "fine_turning": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        },
+        "inference": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        },
+        "PathSettings": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        },
+        "util.ioutil": {
+            "level": "DEBUG",
+            "handlers": [
+                "consoleHandler",
+                "fileHandler"
+            ],
+            "propagate": false
+        }
+    },
+    "root": {
+        "level": "INFO"
+    }
+}

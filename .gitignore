@@ -1,0 +1,12 @@
+script/__pycache__
+.DS_Store
+__pycache__
+*.ipynb
+data/*
+dataset/*
+*.zip
+*.log
+.vscode/*
+htmlcov/*
+.coverage
+.python-version
