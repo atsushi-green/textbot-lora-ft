@@ -1,5 +1,9 @@
+import os
 import sys
 
+import torch
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 独自設定
 sys.path.append("../")
 from logging import DEBUG, basicConfig, config, getLogger
 
@@ -8,6 +12,7 @@ from peft import PeftModel
 from setting import BASE_MODEL_NAME, PEFT_NAME
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+# ログ設定
 basicConfig(filename=logfilepath, level=DEBUG)
 config.dictConfig(log_conf)
 logger = getLogger(__name__)
@@ -20,15 +25,18 @@ def main():
         device_map="auto",
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=False, model_max_length=512)
 
     model = PeftModel.from_pretrained(
         model,
         PEFT_NAME,
         # device_map="auto"
     )
+    if torch.cuda.is_available():
+        model = model.to("cuda")
     model.eval()
     while True:
+        print(">", end="")
         query = input()
         logger.info(f"query: {query}")
         logger.info("\n**********")
@@ -60,8 +68,8 @@ def generate_prompt(data_point):
     return result
 
 
-def generate(model, tokenizer, instruction, input=None, maxTokens=256) -> str:
-    prompt = generate_prompt({"instruction": instruction, "input": input})
+def generate(model, tokenizer, instruction, input_=None, maxTokens=256) -> str:
+    prompt = generate_prompt({"instruction": instruction, "input_": input_})
     input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, add_special_tokens=False).input_ids.cuda()
     outputs = model.generate(
         input_ids=input_ids,
@@ -71,6 +79,7 @@ def generate(model, tokenizer, instruction, input=None, maxTokens=256) -> str:
         top_p=0.75,
         top_k=40,
         no_repeat_ngram_size=2,
+        pad_token_id=tokenizer.eos_token_id,
     )
     outputs = outputs[0].tolist()
 
@@ -88,3 +97,7 @@ def generate(model, tokenizer, instruction, input=None, maxTokens=256) -> str:
             return "Warning: Expected prompt template to be emitted.  Ignoring output."
     else:
         return "Warning: no <eos> detected ignoring output"
+
+
+if __name__ == "__main__":
+    main()

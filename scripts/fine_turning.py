@@ -1,15 +1,24 @@
+import os
 import sys
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 独自設定
 import bitsandbytes as bnb
 import transformers
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_int8_training
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.append("../")
+from logging import DEBUG, basicConfig, config, getLogger
+
 from logconfig.logconf import log_conf, logfilepath
 from PathSetting import PathSetting
 from setting import BASE_MODEL_NAME, PEFT_NAME
 from util.ioutil import read_json
+
+# ログ設定
+basicConfig(filename=logfilepath, level=DEBUG)
+config.dictConfig(log_conf)
+logger = getLogger(__name__)
 
 # Constants
 EVAL_STEPS = 200
@@ -19,7 +28,7 @@ NUM_TRAIN_EPOCHS = 30
 LEARNING_RATE = 3e-4
 SAVE_TOTAL_LIMIT = 3
 CUTOFF_LEN = 256
-tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=False)
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=False, model_max_length=512)
 
 
 def main():
@@ -56,12 +65,13 @@ def main():
 
 
 def define_model(model_name):
+    logger.info("モデル読み込み開始")
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         load_in_8bit=True,
         device_map="auto",
     )
-
+    logger.info("モデル読み込み完了")
     lora_config = LoraConfig(
         r=8,
         lora_alpha=16,
@@ -114,3 +124,7 @@ def split_dataset(data):
             x = tokenize(generate_prompt(data[i]), tokenizer)
             train_dataset.append(x)
     return train_dataset, val_dataset
+
+
+if __name__ == "__main__":
+    main()
