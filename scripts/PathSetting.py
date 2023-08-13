@@ -1,14 +1,17 @@
+import datetime
 from pathlib import Path
 from typing import List
 
 
 class PathSetting:
-    def __init__(self, debug: bool = False) -> None:
+    def __init__(self, peft_name: str = "", debug: bool = False) -> None:
         self.debug = debug  # 最小のデータ数で実行確認モード
+        self.peft_name = peft_name
+        self.exe_time = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
         self.dir_home = Path.cwd().parent  # scriptsの親ディレクトリ
         self.dir_raw_data = self.dir_home / "data"
         self.dir_dataset = self.dir_home / "dataset"
-        self.dir_ft_results = self.dir_home / "ft_results"
+        self.dir_model = self.dir_home / "models" / self.peft_name / self.exe_time
 
     def get_data_filenames(self) -> List[Path]:
         if self.debug:

@@ -3,34 +3,33 @@ import sys
 
 import torch
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 独自設定
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 sys.path.append("../")
 from logging import DEBUG, basicConfig, config, getLogger
 
 from logconfig.logconf import log_conf, logfilepath
 from peft import PeftModel
-from setting import BASE_MODEL_NAME, PEFT_NAME
+from setting import BASE_MODEL_NAME, PEFT_NAME, TOKENIER_NAME
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# ログ設定
 basicConfig(filename=logfilepath, level=DEBUG)
 config.dictConfig(log_conf)
 logger = getLogger(__name__)
 
 
 def main():
+    tokenizer = AutoTokenizer.from_pretrained(TOKENIER_NAME, use_fast=False, model_max_length=256)
+
+    # model = PeftModel.from_pretrained(
+    #     model,
+    #     PEFT_NAME,
+    #     # device_map="auto"
+    # )
     model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL_NAME,
         load_in_8bit=True,
         device_map="auto",
-    )
-
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=False, model_max_length=512)
-
-    model = PeftModel.from_pretrained(
-        model,
-        PEFT_NAME,
-        # device_map="auto"
     )
     if torch.cuda.is_available():
         model = model.to("cuda")
@@ -48,20 +47,9 @@ def main():
 
 def generate_prompt(data_point):
     if data_point["input"]:
-        result = f"""### 指示:
-{data_point["instruction"]}
-
-### 入力:
-{data_point["input"]}
-
-### 回答:
-"""
+        result = f'### 指示:\n{data_point["instruction"]}\n\n### 入力:\n{data_point["input"]}\n\n### 回答:'
     else:
-        result = f"""### 指示:
-{data_point["instruction"]}
-
-### 回答:
-"""
+        result = f'### 指示:\n{data_point["instruction"]}\n\n### 回答:'
 
     # 改行→<NL>
     result = result.replace("\n", "<NL>")
@@ -69,8 +57,10 @@ def generate_prompt(data_point):
 
 
 def generate(model, tokenizer, instruction, input_=None, maxTokens=256) -> str:
-    prompt = generate_prompt({"instruction": instruction, "input_": input_})
+    prompt = generate_prompt({"instruction": instruction, "input": input_})
     input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, add_special_tokens=False).input_ids.cuda()
+    # token_ids = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
+
     outputs = model.generate(
         input_ids=input_ids,
         max_new_tokens=maxTokens,

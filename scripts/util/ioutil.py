@@ -27,7 +27,7 @@ def make_directory(dirpath: Union[Path, str]) -> bool:
         return False
     else:
         # 存在しなければ作る。
-        os.mkdir(dirpath)
+        os.makedirs(dirpath, exist_ok=True)
         logger.info(f'ディレクトリ"{dirpath}"を作成')
         return True
 
